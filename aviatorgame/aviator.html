@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Plane Betting Game</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+    background-color: #222;
+    color: #eee;
+  }
+  .game-container {
+    text-align: center;
+  }
+  .odds-display {
+    font-size: 2em;
+    margin: 10px;
+  }
+  .bet-input, .bet-button, .cashout-button {
+    font-size: 1em;
+    padding: 10px;
+    margin: 5px;
+  }
+  /* Style for the graph */
+  .graph {
+    margin-top: 20px;
+    width: 300px;
+    height: 150px;
+    background-color: #333;
+    border: 1px solid #555;
+  }
+  svg {
+    width: 100%;
+    height: 100%;
+  }
+  .graph-line {
+    stroke: #00ff00;
+    stroke-width: 2;
+    fill: none;
+  }
+</style>
+</head>
+<body>
+
+<div class="game-container">
+  <h1>Plane Betting Game</h1>
+  <input type="number" id="betAmount" class="bet-input" placeholder="Enter bet amount">
+  <button id="betButton" class="bet-button">Bet & Fly</button>
+  <div class="odds-display" id="oddsDisplay">1.00x</div>
+  <button id="cashoutButton" class="cashout-button" disabled>Cash Out</button>
+  <p id="resultMessage"></p>
+  
+  <!-- Graph container -->
+  <div class="graph">
+    <svg id="oddsGraph">
+      <polyline class="graph-line" points="" />
+    </svg>
+  </div>
+</div>
+
+<script>
+  const betButton = document.getElementById('betButton');
+  const cashoutButton = document.getElementById('cashoutButton');
+  const oddsDisplay = document.getElementById('oddsDisplay');
+  const resultMessage = document.getElementById('resultMessage');
+  const oddsGraph = document.getElementById('oddsGraph').querySelector('.graph-line');
+  let currentOdds = 1.00;
+  let interval;
+  let exploded = false;
+  let betAmount;
+  let points = [];
+  let tick = 0;
+
+  // Function to start the game
+  betButton.addEventListener('click', () => {
+    betAmount = parseFloat(document.getElementById('betAmount').value);
+    if (isNaN(betAmount) || betAmount <= 0) {
+      alert('Please enter a valid bet amount.');
+      return;
+    }
+
+    currentOdds = 1.00;
+    exploded = false;
+    tick = 0;
+    points = ["0,150"]; // Starting point for the graph line
+    oddsDisplay.textContent = `${currentOdds.toFixed(2)}x`;
+    resultMessage.textContent = '';
+    oddsGraph.setAttribute('points', points.join(" ")); // Reset graph
+    cashoutButton.disabled = false;
+    betButton.disabled = true;
+    
+    // Random explosion odds between 1.00 and 3.34
+    const explosionOdds = (Math.random() * (3.34 - 1.0) + 1.0).toFixed(2);
+
+    // Interval to increase odds
+    interval = setInterval(() => {
+      currentOdds += 0.01;
+      oddsDisplay.textContent = `${currentOdds.toFixed(2)}x`;
+
+      // Calculate graph point
+      tick += 10;
+      const y = 150 - (currentOdds * 45); // Scale odds for graph
+      points.push(`${tick},${y}`);
+      oddsGraph.setAttribute('points', points.join(" "));
+
+      if (currentOdds >= explosionOdds) {
+        explode();
+      }
+    }, 100); // Increase odds every 100 ms
+  });
+
+  // Cash out function
+  cashoutButton.addEventListener('click', () => {
+    if (!exploded) {
+      clearInterval(interval);
+      const payout = (betAmount * currentOdds).toFixed(2);
+      resultMessage.textContent = `You cashed out at ${currentOdds.toFixed(2)}x! You won $${payout}.`;
+      resetGame();
+    }
+  });
+
+  // Explode function
+  function explode() {
+    exploded = true;
+    clearInterval(interval);
+    resultMessage.textContent = `The plane exploded at ${currentOdds.toFixed(2)}x! You lost $${betAmount}.`;
+    resetGame();
+  }
+
+  // Reset the game
+  function resetGame() {
+    betButton.disabled = false;
+    cashoutButton.disabled = true;
+    currentOdds = 1.00;
+  }
+</script>
+
+</body>
+</html>
